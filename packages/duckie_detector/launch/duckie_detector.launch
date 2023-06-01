@@ -1,0 +1,6 @@
+<launch>
+
+  <node pkg="duckie_detector" type="detector.py" name="duckie_detector_duckie" output="screen"/>
+  
+
+</launch>
