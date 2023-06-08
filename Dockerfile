@@ -1,6 +1,6 @@
 # parameters
-ARG REPO_NAME="<duckie_nimo_ros>"
-ARG DESCRIPTION="<duckie>"
+ARG REPO_NAME="duckie_nimo_ros"
+ARG DESCRIPTION="duckie"
 ARG MAINTAINER="<Nino Goguadze> (ninoguadze@gmail.com)"
 # pick an icon from: https://fontawesome.com/v4.7.0/icons/
 ARG ICON="cube"

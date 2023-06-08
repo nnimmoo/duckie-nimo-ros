@@ -1,47 +1,38 @@
-# Template: template-ros
+# Project Duckiebot Avoidance
 
-This template provides a boilerplate repository
-for developing ROS-based software in Duckietown.
-
-**NOTE:** If you want to develop software that does not use
-ROS, check out [this template](https://github.com/duckietown/template-basic).
-
+This project aims to enable a DuckieBot to detect other DuckieBots or ducks in its driving lane and navigate around them to ensure safe and uninterrupted driving.
 
 ## How to use it
 
-### 1. Fork this repository
+### 1. Introduction
 
-Use the fork button in the top-right corner of the github page to fork this template repository.
+The DuckieBot Lane Navigation project addresses the challenge of detecting obstacles, specifically DuckieBots or ducks, in the driving lane of a DuckieBot. It implements a solution that enables the DuckieBot to autonomously navigate around these obstacles, ensuring a safe and uninterrupted driving experience.
 
-
-### 2. Create a new repository
-
-Create a new repository on github.com while
-specifying the newly forked template repository as
-a template for your new repository.
+The project relies on computer vision techniques for object detection and a control algorithm for navigation. By integrating these components, the DuckieBot can identify potential obstacles and take appropriate actions to avoid collisions, thereby enhancing the overall safety and efficiency of its navigation.
 
 
-### 3. Define dependencies
+### 2. Requirements
 
-List the dependencies in the files `dependencies-apt.txt` and
-`dependencies-py3.txt` (apt packages and pip packages respectively).
+To run this project, you need the following:
 
+- A DuckieBot equipped with a camera
+- A compatible operating system (e.g., Duckietown, ROS, or any system supporting the Duckietown stack)
+- The necessary software dependencies (docker, duckietown)
 
-### 4. Place your code
-
-Place your code in the directory `/packages/` of
-your new repository.
-
-
-### 5. Setup launchers
-
-The directory `/launchers` can contain as many launchers (launching scripts)
-as you want. A default launcher called `default.sh` must always be present.
-
-If you create an executable script (i.e., a file with a valid shebang statement)
-a launcher will be created for it. For example, the script file 
-`/launchers/my-launcher.sh` will be available inside the Docker image as the binary
-`dt-launcher-my-launcher`.
-
-When launching a new container, you can simply provide `dt-launcher-my-launcher` as
-command.
+### 3. Instalation and Usage
+To install and set up the project, follow these steps:
+Clone the project repository:
+```
+git clone https://github.com/nnimmoo/duckie-nimo-ros
+```
+after that, navigate to the project directory and run the following codes:
+```
+dts devel build -f
+dts devel run
+```
+To run the project on the duckiebot, use following ones:
+```
+dts devel build -f -H ![MY_ROBOT].local
+dts devel run -H ![MY_ROBOT].local
+```
+(use robots name instead of **![MY_ROBOT]**)

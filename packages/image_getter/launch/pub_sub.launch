@@ -1,6 +1,0 @@
-<launch>
-
-  <node pkg="image_getter" type="publisher.py" name="publisher_node" output="screen"/>
-  <node pkg="image_getter" type="subscriber.py" name="subscriber_node"  output="screen"/>
-
-</launch>

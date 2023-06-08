@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>image_getter</name>
+  <name>duckie_detector</name>
   <version>1.0.0</version>
   <description>duckie_detector node</description>
   <maintainer email="ninoguadze@gmail.com">Nino Goguadze</maintainer>
@@ -8,12 +8,10 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>duckietown_msgs</build_depend>
-  <build_depend>image_processing</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>cv_bridge</build_depend>
 
   <run_depend>duckietown_msgs</run_depend>
-  <run_depend>image_processing</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>cv_bridge</run_depend>
 
