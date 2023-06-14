@@ -84,7 +84,7 @@ class WheelsNode(DTROS):
 
         rospy.Rate(0.5).sleep()
         wh = self.get_wheel(0.2, 0.2)
-        tw = self.get_twist(0.5, 0)
+        tw = self.get_twist(0.25, 0)
 
         self.move(wheel=wh, twist=tw)
 
@@ -94,7 +94,11 @@ class WheelsNode(DTROS):
         if self.duckie_detect or self.duckiebot_detect:
             # Move wheels to the left
             # Publish left wheel command
-            tw = self.get_twist(2, 10)
+            wh = self.get_wheel(0,0)
+            tw = self.get_twist(0,0)
+            self.move(wheel=wh, twist=tw)
+
+            tw = self.get_twist(1, 5)
             wheels_cmd = self.get_wheel(0.5, 1.0)
             self.move(wheel=wheels_cmd,twist=tw)
 
@@ -108,7 +112,7 @@ class WheelsNode(DTROS):
 
             # Move wheels to the right
             # Publish right wheel command
-            tw = self.get_twist(2, 10)
+            tw = self.get_twist(1, 5)
             wheels_cmd = self.get_wheel(1.0, 0.5)
             self.move(wheel=wheels_cmd,twist=tw)
 
