@@ -33,23 +33,28 @@ class EdgeDetectionNode(DTROS):
         img_cv2 = self.bridge.compressed_imgmsg_to_cv2(msg, "bgr8")
 
         # applying filter
-        # img_filtered = cv2.Canny(img_cv2, 50, 150)
-        # yellow mask
         dimension=img_cv2.shape
         img_cv2 = img_cv2[round(dimension[0]/2):dimension[0], round(dimension[1]/3):round(dimension[1]-dimension[1]/3), :]
-        lower = np.array([22, 93, 0], dtype="uint8")
-        upper = np.array([45, 255, 255], dtype="uint8")
-        mask = cv.inRange(img_cv2, lower, upper)
-        
-       
-        # detected_output = cv.bitwise_and(img_cv2, img_cv2, mask =  mask) 
-        ones = cv.countNonZero(mask)
+ 
+        yellow_lower = np.array([22, 93, 0], dtype="uint8")
+        yellow_upper = np.array([45, 255, 255], dtype="uint8")
+        red_lower = np.array([0, 50, 50], dtype="uint8")
+        red_upper = np.array([10, 255, 255], dtype="uint8")
+
+        yellow_mask = cv.inRange(img_cv2, yellow_lower, yellow_upper)
+        red_mask = cv.inRange(img_cv2,red_lower,red_upper)
+        mask = yellow_mask + red_mask
+
+        detected_output = cv.bitwise_and(img_cv2, img_cv2, mask =  mask) 
+        ones = cv.countNonZero(red_mask)
+        twos = cv.countNonZero(yellow_mask)
+
         # converting filtered result to CompressedImage
-        img_filtered_compressed = self.bridge.cv2_to_compressed_imgmsg(mask)
+        img_filtered_compressed = self.bridge.cv2_to_compressed_imgmsg(detected_output)
         
         # publishing to 'image_pub'
         self.pub.publish(img_filtered_compressed)
-        self.remote_pub.publish(ones>0)
+        self.remote_pub.publish(ones>0 and twos> 0)
 
 
 if __name__ == '__main__':

@@ -90,29 +90,28 @@ class WheelsNode(DTROS):
         # rospy.Rate(0.5).sleep()
         while not rospy.is_shutdown():
             if self.duckiebot_detect:
-                print("detected")
+                self.stop()
+                rospy.sleep(1)
                 # Move wheels to the left
                 # Publish left wheel command
-                #self.stop()
-
-                # tw = self.get_twist(0.8, 0.2)
-                # wheels_cmd = self.get_wheel(0.2, 0.6)
-                # self.move(wheel=wheels_cmd,twist=tw)
-
-                # rospy.Rate(0.5).sleep()
+               
+                tw = self.get_twist(0.25, 0)
+                wheels_cmd = self.get_wheel(0.2, 0.8)
+                self.move(wheel=wheels_cmd,twist=tw)
+                rospy.sleep(0.5)
+                # rospy.Rate(1).sleep()
 
                 # # Move forward for specified duration
-                # twist_cmd = self.get_twist(0.25, 0)  # Forward motion
-                # wheels_cmd = self.get_wheel(0.2, 0.2)
-                # self.move(wheel= wheels_cmd,twist=twist_cmd)
-                # rospy.Rate(0.25).sleep()
+                twist_cmd = self.get_twist(0.25, 0)  # Forward motion
+                wheels_cmd = self.get_wheel(0.25, 0.2)
+                self.move(wheel= wheels_cmd,twist=twist_cmd)
 
                 # # Move wheels to the right
                 # # Publish right wheel command
-                # tw = self.get_twist(0.25,0)
-                # wheels_cmd = self.get_wheel(0.6, 0.2)
-                # self.move(wheel=wheels_cmd,twist=tw)
-                print("stopping bc bot")
+                tw = self.get_twist(0.25,0)
+                wheels_cmd = self.get_wheel(0.8, 0.2)
+                self.move(wheel=wheels_cmd,twist=tw)
+
                 self.stop()        
 
     def get_wheel(self, l, r):
