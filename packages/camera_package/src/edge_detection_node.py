@@ -35,11 +35,13 @@ class EdgeDetectionNode(DTROS):
         # applying filter
         # img_filtered = cv2.Canny(img_cv2, 50, 150)
         # yellow mask
+        dimension=img_cv2.shape
+        img_cv2 = img_cv2[round(dimension[0]/2):dimension[0], round(dimension[1]/3):round(dimension[1]-dimension[1]/3), :]
         lower = np.array([22, 93, 0], dtype="uint8")
         upper = np.array([45, 255, 255], dtype="uint8")
         mask = cv.inRange(img_cv2, lower, upper)
-        dimension=img_cv2.shape
-        img_cv2 = img_cv2[round(dimension[0]/2):dimension[0], round(dimension[1]/3):round(dimension[1]-dimension[1]/3), :]
+        
+       
         # detected_output = cv.bitwise_and(img_cv2, img_cv2, mask =  mask) 
         ones = cv.countNonZero(mask)
         # converting filtered result to CompressedImage
