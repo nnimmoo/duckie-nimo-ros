@@ -17,14 +17,15 @@ class WheelsNode(DTROS):
     def __init__(self, node_name):
         super(WheelsNode, self).__init__(node_name=node_name, node_type=NodeType.CONTROL)
         # testing for all Twist2DStamped, WheelsCmdStamped
-
+        self.duckie_detect = False
+        self.duckiebot_detect = False
         self.duckie_detected_sub  = rospy.Subscriber(
-            duckie_detected, Bool, 
+            'duckie_detected', Bool, 
             self.duckie_dt_cb, 
             queue_size=1
             )
         self.duckiebot_detected_sub = rospy.Subscriber(
-            duckiebot_detected, Bool, 
+            'duckiebot_detected', Bool, 
             self.duckiebot_dt_cb, 
             queue_size=1
             )
@@ -58,57 +59,14 @@ class WheelsNode(DTROS):
     
 
     def duckie_dt_cb(self, detected):
-        rospy.loginfo(f'duckie: {detected}')
-        if detected.data:  # Assuming the 'data' field indicates detection status
-            
-            # Move wheels to the left
-            # Publish left wheel command
-            tw = self.get_twist(10, 10)
-            wheels_cmd = self.get_wheel(0.5, 1.0)
-            self.move(wheel=wheels_cmd,twist=tw)
-
-            rospy.Rate(0.5).sleep()
-
-            # Move forward for specified duration
-            twist_cmd = self.get_twist(20, 0)  # Forward motion
-            wheels_cmd = self.get_wheel(0.9, 0.9)
-            self.move(wheel= wheels_cmd,twist=twist_cmd)
-            rospy.Rate(0.25).sleep()
-
-            # Move wheels to the right
-            # Publish right wheel command
-            tw = self.get_twist(10, 10)
-            wheels_cmd = self.get_wheel(1.0, 0.5)
-            self.move(wheel=wheels_cmd,twist=tw)
-
-            rospy.Rate(0.5).sleep()  # Delay for wheel adjustment
+        rospy.loginfo(f'duckie: {detected.data}')
+        self.duckie_detect = detected.data
+        rospy.loginfo("i am here")
 
     def duckiebot_dt_cb(self,detected):
-        rospy.loginfo(f'duckiebot: {detected}')
-        if detected.data:  # Assuming the 'data' field indicates detection status
-            
-            # Move wheels to the left
-            # Publish left wheel command
-            tw = self.get_twist(10, 10)
-            wheels_cmd = self.get_wheel(0.5, 1.0)
-            self.move(wheel=wheels_cmd,twist=tw)
-
-            rospy.Rate(0.5).sleep()
-
-            # Move forward for specified duration
-            twist_cmd = self.get_twist(20, 0)  # Forward motion
-            wheels_cmd = self.get_wheel(0.9, 0.9)
-            self.move(wheel= wheels_cmd,twist=twist_cmd)
-            rospy.Rate(0.25).sleep()
-
-            # Move wheels to the right
-            # Publish right wheel command
-            tw = self.get_twist(10, 10)
-            wheels_cmd = self.get_wheel(1.0, 0.5)
-            self.move(wheel=wheels_cmd,twist=tw)
-
-            rospy.Rate(0.5).sleep() 
-
+        rospy.loginfo(f'duckiebot: {detected.data}')
+        self.duckiebot_detect = detected.data
+        
     def cmd_cb(self, twist):
         rospy.loginfo(f'Twist: v={twist.v}, omega={twist.omega}')
 
@@ -119,24 +77,43 @@ class WheelsNode(DTROS):
         wh = self.get_wheel(0,0)
         tw = self.get_twist(0,0)
         self.move(wheel=wh, twist=tw)
+        rospy.loginfo('I stopped')
 
 
     def run(self):
 
         rospy.Rate(0.5).sleep()
-        wh = self.get_wheel(0.9, 0.9)
-        tw = self.get_twist(20, 0)
+        wh = self.get_wheel(0.2, 0.2)
+        tw = self.get_twist(0.5, 0)
 
         self.move(wheel=wh, twist=tw)
 
         rospy.Rate(0.5).sleep()
         rospy.loginfo('-------------------')
 
-        # wh = self.get_wheel(1, 0.2)
-        # tw = self.get_twist(10, 10)
-        # self.move(wh, tw)
+        if self.duckie_detect or self.duckiebot_detect:
+            # Move wheels to the left
+            # Publish left wheel command
+            tw = self.get_twist(2, 10)
+            wheels_cmd = self.get_wheel(0.5, 1.0)
+            self.move(wheel=wheels_cmd,twist=tw)
 
-        # rospy.Rate(1).sleep()
+            rospy.Rate(0.5).sleep()
+
+            # Move forward for specified duration
+            twist_cmd = self.get_twist(0.5, 0)  # Forward motion
+            wheels_cmd = self.get_wheel(0.2, 0.2)
+            self.move(wheel= wheels_cmd,twist=twist_cmd)
+            rospy.Rate(0.25).sleep()
+
+            # Move wheels to the right
+            # Publish right wheel command
+            tw = self.get_twist(2, 10)
+            wheels_cmd = self.get_wheel(1.0, 0.5)
+            self.move(wheel=wheels_cmd,twist=tw)
+
+            rospy.Rate(0.5).sleep() 
+
 
         self.stop()
 

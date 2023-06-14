@@ -28,8 +28,7 @@ class EdgeDetectionNode(DTROS):
         self.remote_pub = rospy.Publisher('duckie_detected', Bool,queue_size=1)
 
     def callback(self, msg):
-        print(f'callback with type ${type(msg)}')
-
+        # print(f'callback with type ${type(msg)}')
         # converting CompressedImage to cv2
         img_cv2 = self.bridge.compressed_imgmsg_to_cv2(msg, "bgr8")
 
@@ -39,7 +38,9 @@ class EdgeDetectionNode(DTROS):
         lower = np.array([22, 93, 0], dtype="uint8")
         upper = np.array([45, 255, 255], dtype="uint8")
         mask = cv.inRange(img_cv2, lower, upper)
-        detected_output = cv.bitwise_and(img_cv2, img_cv2, mask =  mask) 
+        dimension=img_cv2.shape
+        img_cv2 = img_cv2[round(dimension[0]/2):dimension[0], round(dimension[1]/3):round(dimension[1]-dimension[1]/3), :]
+        # detected_output = cv.bitwise_and(img_cv2, img_cv2, mask =  mask) 
         ones = cv.countNonZero(mask)
         # converting filtered result to CompressedImage
         img_filtered_compressed = self.bridge.cv2_to_compressed_imgmsg(mask)

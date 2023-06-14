@@ -27,7 +27,7 @@ class VehicleDetectionNode(DTROS):
         self.remote_pub = rospy.Publisher('duckiebot_detected', Bool,queue_size=1)
 
     def callback(self, msg):
-        print(f'callback with type ${type(msg)}')
+        # print(f'callback with type ${type(msg)}')
         # converting CompressedImage to cv2
         img_cv2 = self.bridge.compressed_imgmsg_to_cv2(msg, "bgr8")
         # vehicle mask
