@@ -2,123 +2,146 @@
 
 import os
 import rospy
-from duckietown.dtros import DTROS, NodeType
-from duckietown_msgs.msg import WheelsCmdStamped, Twist2DStamped, BoolStamped
+import json
+import yaml
+import time
+from std_srvs.srv import EmptyResponse, Empty
+from duckietown.dtros import DTROS, NodeType, DTParam, ParamType
+from duckietown_msgs.msg import WheelsCmdStamped, Twist2DStamped 
 from std_msgs.msg import String, Bool
-
 
 HOST = os.environ['VEHICLE_NAME']
 cmd = f'/{HOST}/car_cmd_switch_node/cmd'
+velocity = f'/{HOST}/kinematics_node/velocity'
 wheels_cmd_executed = f'/{HOST}/wheels_driver_node/wheels_cmd_executed'
-duckiebot_detected= f'/{HOST}/duckiebot_detected'
-duckie_detected= f'/{HOST}/duckie_detected'
+car_cmd = f'/{HOST}/joy_mapper_node/car_cmd'
 
 class WheelsNode(DTROS):
     def __init__(self, node_name):
         super(WheelsNode, self).__init__(node_name=node_name, node_type=NodeType.CONTROL)
-        # testing for all Twist2DStamped, WheelsCmdStamped
+
+        # self.is_obstacle_detected = False
+        self.wh = self.get_wheel(0.4, 0.4)
+        self.tw = self.get_twist(0.4, 0)
+
+        self.pub_cmd = rospy.Publisher(
+            cmd,
+            Twist2DStamped,
+            queue_size=1,
+        )
+
+        self.pub_velocity = rospy.Publisher(
+            velocity,
+            Twist2DStamped,
+            queue_size=1,
+        )
+
+        self.pub_wheels_cmd = rospy.Publisher(
+            wheels_cmd_executed,
+            WheelsCmdStamped,
+            queue_size=1
+        )
+
+        self.sub_car_cmd = rospy.Subscriber(
+            car_cmd,
+            Twist2DStamped,
+            self.car_cmd_cb
+        )
+
+        self.pub_car_cmd = rospy.Publisher(
+            car_cmd,
+            Twist2DStamped,
+            queue_size=1
+        )
+
+        self.sub_detected = rospy.Subscriber(
+            'duckiebot_detected',
+            Bool,
+            self.det_cb,
+            queue_size=1
+        )
+
+        self.duckie_detected = rospy.Subscriber(
+            'duckie_detected',
+            Bool,
+            self.duckie_cb,
+            queue_size=1
+        )
         self.duckie_detect = False
-        self.duckiebot_detect = False
-        self.duckie_detected_sub  = rospy.Subscriber(
-            'duckie_detected', Bool, 
-            self.duckie_dt_cb, 
-            queue_size=1
-            )
-        self.duckiebot_detected_sub = rospy.Subscriber(
-            'duckiebot_detected', Bool, 
-            self.duckiebot_dt_cb, 
-            queue_size=1
-            )
-        # CMD
-        self.cmd_pub = rospy.Publisher(
-            cmd,
-            Twist2DStamped,
-            queue_size=1
-        )
-
-        self.cmd_sub = rospy.Subscriber(
-            cmd,
-            Twist2DStamped,
-            self.cmd_cb,
-            queue_size=1
-        )
-
-        # WHEELS_CMD_EXECUTED
-        self.wheels_pub = rospy.Publisher(
-            wheels_cmd_executed,
-            WheelsCmdStamped,
-            queue_size=1
-        )
-
-        self.wheels_sub = rospy.Subscriber(
-            wheels_cmd_executed,
-            WheelsCmdStamped,
-            self.wheels_cb,
-            queue_size=1
-        )
-    
-
-    def duckie_dt_cb(self, detected):
-        print(f'duckie: {detected.data}')
-        self.duckie_detect = detected.data
-
-    def duckiebot_dt_cb(self,detected):
-        # print(f'duckiebot: {detected.data}')
-        self.duckiebot_detect = detected.data
-        print(f'duckiebot:{self.duckiebot_detect}')
-        
-    def cmd_cb(self, twist):
-        rospy.loginfo(f'Twist: v={twist.v}, omega={twist.omega}')
-
-    def wheels_cb(self, wheel):
-        rospy.loginfo(f'Wheel: left={wheel.vel_left}, right={wheel.vel_right}')
+        self.detect = False
 
     def stop(self):
         wh = self.get_wheel(0,0)
         tw = self.get_twist(0,0)
         self.move(wheel=wh, twist=tw)
-        print('I stopped')
 
-
+    def det_cb(self, b):
+        # rospy.loginfo(f'detect: {b}')
+        self.detect = b.data
+    def duckie_cb(self,b):
+        rospy.loginfo(f'detect: {b}')
+        self.duckie_detect = b.data
+    
+        
     def run(self):
-
-        rospy.Rate(0.5).sleep()
+        rospy.sleep(2)
         wh = self.get_wheel(0.2, 0.2)
         tw = self.get_twist(0.25, 0)
-        self.move(wheel=wh, twist=tw)
+        self.move(wh, tw)
 
-        # rospy.Rate(0.5).sleep()
         while not rospy.is_shutdown():
-            if self.duckiebot_detect:
+            if self.detect or self.duckie_detect:
                 self.stop()
                 rospy.sleep(1)
-                # Move wheels to the left
-                # Publish left wheel command
-               
-                tw = self.get_twist(0.25, 0)
-                wheels_cmd = self.get_wheel(0.2, 0.8)
-                self.move(wheel=wheels_cmd,twist=tw)
-                rospy.sleep(0.5)
-                # rospy.Rate(1).sleep()
+                self.avoid_car()
+                rospy.sleep(1)
+                self.stop()
+                break
+        rospy.sleep(2)
+        self.stop()
 
-                # # Move forward for specified duration
-                twist_cmd = self.get_twist(0.25, 0)  # Forward motion
-                wheels_cmd = self.get_wheel(0.25, 0.2)
-                self.move(wheel= wheels_cmd,twist=twist_cmd)
 
-                # # Move wheels to the right
-                # # Publish right wheel command
-                tw = self.get_twist(0.25,0)
-                wheels_cmd = self.get_wheel(0.8, 0.2)
-                self.move(wheel=wheels_cmd,twist=tw)
-
-                self.stop()        
-
-    def get_wheel(self, l, r):
+    def get_wheel(self, left, right):
         wheel = WheelsCmdStamped()
-        wheel.vel_left = l
-        wheel.vel_right = r
+        wheel.vel_left = left
+        wheel.vel_right = right
         return wheel
+    
+   
+
+    def avoid_car(self):
+        # left
+        tw = self.get_twist(0.3, 2)
+        wh = self.get_wheel(0.1, 0.7)
+        self.move(wh, tw)
+
+        rospy.sleep(1)
+        self.stop()
+
+        # right 
+        tw = self.get_twist(0.4, -3)
+        wh = self.get_wheel(0.7, 0.1)
+        self.move(wh, tw)
+
+        rospy.sleep(1)
+        self.stop()
+
+        # right        
+        tw = self.get_twist(0.3, -3.5)
+        wh = self.get_wheel(0.7, 0.1)
+        self.move(wh, tw)
+
+        rospy.sleep(0.6)
+        self.stop()
+
+        # left        
+        tw = self.get_twist(0.45, 4)
+        wh = self.get_wheel(0.1, 0.7)
+        self.move(wh, tw)
+
+        rospy.sleep(1)
+        self.stop()
+
 
     def get_twist(self, v, omega):
         twist = Twist2DStamped()
@@ -127,8 +150,68 @@ class WheelsNode(DTROS):
         return twist
 
     def move(self, wheel, twist):
-        self.wheels_pub.publish(wheel)
-        self.cmd_pub.publish(twist)
+        self.pub_wheels_cmd.publish(wheel)
+        self.pub_cmd.publish(twist)
+    
+    def car_cmd_cb(self, twist):
+        twist.v = self.trim(
+            value=twist.v,
+            low=-self._v_max.value, 
+            high=self._v_max.value
+        )
+
+        twist.omega = self.trim(
+            value=twist.omega,
+            low=-self._omega_max.value,
+            high=self._omega_max.value
+        )
+
+        # setting motor constants
+        k_r = k_l = self._k
+
+        # adjust k by gain and trim
+        k_r_inv = (self._gain.value + self._trim.value) / k_r
+        k_l_inv = (self._gain.value - self._trim.value) / k_l
+
+        omega_r = (twist.v + 0.5 * twist.omega * self._baseline.value) / self._radius.value
+        omega_l = (twist.v - 0.5 * twist.omega * self._baseline.value) / self._radius.value
+
+        # conversion from motor rotation rate to duty cycle
+        u_r = omega_r * k_r_inv
+        u_l = omega_l * k_l_inv
+
+        # limiting output
+        u_r_lim = self.trim(
+            value=u_r,
+            low=-self._limit.value,
+            high=self._limit.value
+        )
+        
+        u_l_lim = self.trim(
+            value=u_l,
+            low=-self._limit.value,
+            high=self._limit.value
+        )
+
+        # publishing wheel
+        wh = self.get_wheel(l=u_l_lim, r=u_r_lim)
+        wh.header.stamp = twist.header.stamp
+        self.pub_wheels_cmd.publish(wh)
+
+        # conversion from motor duty to motor rotation rate
+        omega_r = wh.vel_right / k_r_inv
+        omega_l = wh.vel_left / k_l_inv
+
+        # velocity calculation
+        v = (self._radius.value * omega_r + self._radius.value * omega_l) / 2.0
+        omega = (self._radius.value * omega_r + self._radius.value * omega_l) / self._baseline.value 
+
+        # publishing velocity
+        tw = self.get_twist(v=v, omega=omega)
+        tw.header = twist.header
+        self.pub_velocity.publish(tw)
+
+ 
 
 if __name__ == '__main__':
     print('started')
